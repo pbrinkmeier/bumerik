@@ -1,0 +1,527 @@
+\documentclass[a4paper, 14pt]{article}
+
+\usepackage[margin=3cm]{geometry}
+\usepackage[ngerman]{babel}
+\usepackage[autostyle=true,german=quotes]{csquotes}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usepackage{multirow}
+\usepackage{array}
+\usetikzlibrary{
+	calc
+}
+\usepackage{scalerel}
+
+\def\b{\scalerel*{\includegraphics{emoji/b}}{O}}
+\newcommand*\diff{\mathop{}\!\mathrm{d}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand*\Spektrum{\mathop{}\!\mathrm{spec}}
+\newcommand*\cond{\mathop{}\!\mathrm{cond}}
+
+\author{Paul Brinkmeier}
+\title{Cheatsheet für \b{}umerik}
+\begin{document}
+	\maketitle
+	\newpage
+	\tableofcontents
+	\newpage
+
+	\section{Interpolation und Approximation}
+
+	\paragraph{Weiherstraßscher Approximationssatz}
+
+	Sei $f : [a, b] \to \mathbb{R}$ stetig. Dann gilt:
+
+	\begin{equation}
+		\forall \epsilon > 0 : \exists N \in \mathbb{N}, p \in \mathbb{P}^N : \max_{x \in [a, b]}{|f(x) - p(x)|} \leq \epsilon
+	\end{equation}
+
+	\subsection{Polynominterpolation}
+
+	\paragraph{Lagrange-Polynome} Das $n$-te Lagrange-Polynom zu $N + 1$ Stützwerten $f_n(x) = f(x_n)$ ist gegeben durch:
+
+	\begin{equation}
+		L_n(x) = \prod_{m = 0,m \neq n}^{N}{\frac{x - x_m}{x_n - x_m}}
+	\end{equation}
+
+	$f(x)$ lässt sich dann interpolieren durch $p(x)$ mit:
+
+	\begin{equation}
+		p(x) = \sum_{n = 0}^{N}{f_n L_n(x)}
+	\end{equation}
+
+	\begin{itemize}
+		\item Für $f_n = 0$ muss man $L_n$ also gar nicht berechnen.
+		\item Ein Lagrange-Polynom hat immer den Grad $N - 1$.
+		\item Lagrange-Interpolation ist für hohe $N$ schlecht konditioniert und liegt außerdem in $O(n)$.
+	\end{itemize}
+
+	\paragraph{Newton-Darstellung}
+
+	\begin{equation}
+		p_{0, N}(x) = a_0 + a_1 (x - x_0) + a_2 (x - x_0) (x - x_1) + ... + a_N \prod_{m = 0}^{N - 1}{x - x_m}
+	\end{equation}
+
+	\begin{itemize}
+		\item Lässt einfach durch das \href{https://de.wikipedia.org/wiki/Horner-Schema}{Horner-Schema} auswerten.
+		\item $p_{0, N}(x) = p_{0, N - 1}(x) + a_N w_N(x)$ mit
+	\end{itemize}
+
+	\begin{equation}
+		w_n(x) = \prod_{m = 0}^{n - 1}{(x - x_m)}
+	\end{equation}
+
+	\paragraph{Naive Koeffizientenbestimmung}
+	
+	\begin{eqnarray}
+		f_0 = p(x_0) = a_0 \\
+		f_1 = p(x_1) = a_0 + (x_1 - x_0) a_1 \\
+		f_2 = p(x_2) = a_0 + (x_2 - x_0) a_1 + (x_2 - x_1) a_2
+	\end{eqnarray}
+	
+	\begin{itemize}
+		\item Problem: $2n$ Additionen, $2(n - 1)$ Multiplikationen, 1 Division für $a_n$.
+		\item $\leadsto$ Insgesamt $N(N + 1)$ Additionen, $N(N - 1)$ Multiplikationen, $N$ Divisionen.
+	\end{itemize}
+
+	\paragraph{Lemma von Aitken}
+
+	\begin{equation}
+		p_{n, k}(x) = \frac{(x_n - x) p_{n + 1, k}(x) - (x_k - x) p_{n, k - 1}(x)}{x_n - x_k}
+	\end{equation}
+
+	\paragraph{Dividierte Differenzen}
+
+	\begin{equation}
+		f_{n, k} = \begin{cases}
+			f_{n} & n = k \\
+			\frac{f_{n, k - 1} - f_{n + 1, k}}{x_n - x_k} & \textrm{sonst}
+		\end{cases}
+	\end{equation}
+
+	\begin{itemize}
+		\item $\frac{N(N + 1)}{2}$ Divisionen
+		\item $N(N + 1)$ Additionen
+		\item $p(x) = \sum_{m = 0}^{N}{f_{0, m} w_m(x)}$
+	\end{itemize}
+
+	\paragraph{Lebesgue-Konstante}
+
+	Bezüglich der Stützstellen $x_0, ..., X_N$:
+
+	\begin{equation}
+		\Lambda_N = \max{\sum_{x \in [a, b]}^{N}{|L_n(x)|}}
+	\end{equation}
+
+	\begin{itemize}
+		\item $\Lambda_N$ ist nur von der relativen Lage der Stützstellen zueinander abhängig.
+	\end{itemize}
+
+	\paragraph{Interpolationsfehler}
+
+	Der maximale Interpolationsfehler eines Interpolationspolynoms $p(x)$ zu $f(x)$ mit $N + 1$ Stützstellen ($x_0$ bis $x_N$) ist:
+
+	\begin{equation}
+		\max_{x \in [a, b]}{|f(x) - p(x)|} \leq \max_{x \in [a, b]}{|w_{N + 1}(x)|}\frac{\max_{x \in [a, b]}{|f^{(N + 1)}(x)|}}{(N + 1)!}
+	\end{equation}
+
+	\paragraph{Optimale (Tschebyscheff-) Stützstellen}
+	
+	Wählt man die $N + 1$ Stützstellen $x_n$ genau als die Nullstellen des Tschebyscheff-Polynoms $T_{N + 1}(x)$, wobei
+
+	\begin{align}
+		T_0(x)       & = 1 \\
+		T_1(x)       & = x \\
+		T_{n + 1}(x) & = 2x \cdot T_n(x) - T_{n - 1}(x) \\
+		T_n(x)       & = \cos(n \cdot \arccos{x}) \\
+		T_n(\cos{\left( \frac{2n + 1}{2N + 2} \pi \right)})       & = 0
+	\end{align}
+
+	so wird $\max_{x \in [-1, 1]}{|w_{N + 1}(x)|}$ minimal, und zwar $2^{-N}$.
+	Mit mehr Stützstellen sinkt also der Fehler.
+
+	Es gilt:
+	
+	\begin{itemize}
+		\item $\forall x \in \mathbb{R} : |T_N(x)| \leq 1$
+		\item $\deg(T_N) = N$
+		\item $\left< T_0, ..., T_N \right> = \mathbb{P}^N$ (die $T_n$ bilden 1 Basis von $\mathbb{P}^N$)
+		\item $T_N$ hat $N$ verschiedene reelle Nullstellen $x_n$ mit $x_n \in [-1, 1]$
+	\end{itemize}
+
+	\paragraph{Tschebyscheff-Darstellung}
+
+	\begin{equation}
+		p(x) = \frac{c_0}{2} + \sum_{n = 1}^{N}{c_n T_n(x)}
+	\end{equation}
+
+	\begin{itemize}
+		\item Tschebyscheff-Darstellung ist eindeutig.
+		\item Berechnung von $c_n$ im Fall $N + 1 = 2^k$: $O(N * log N)$
+	\end{itemize}
+
+	\paragraph{Clenshaw-Algorithmus}
+
+	Sei $p(x)$ gegeben als
+
+	\begin{equation}
+		p(x) = \frac{c_0}{2} + \sum_{n = 1}^{N}{c_n T_n(x)}
+	\end{equation}
+
+	Dann lässt sich $p(x)$ folgendermaßen an der Stelle $x$ auswerten:
+
+	\begin{align}
+		d_{N + 2} & = 0 \\
+		d_{N + 1} & = 0 \\
+		d_n       & = c_n + 2xd_{n + 1} - d_{n + 2} \\
+		p(x)      & = \frac{1}{2} (d_0 - d_2)
+	\end{align}
+
+	\begin{itemize}
+		\item $2N$ Additionen, $N + 2$ Multiplikationen
+	\end{itemize}
+
+	\subsection{Kubische Spline-Interpolation}
+
+	Seien $(x_k, y_k)$ Stützstellen für $k \in \{ 0, ..., N \}$ mit
+
+	\begin{equation}
+		a = x_0 < x_1 < ... < x_N = b
+	\end{equation}
+
+	Ziel: Finde $s(x)$ mit
+
+	\begin{itemize}
+		\item Interpolation: $s(x_n) = y_n$
+		\item Glattheit: $s$ zweimal stetig diff'bar und
+	\end{itemize}
+
+	\begin{equation} \label{eq:glatt}
+		\int_a^b{|s''(b)|^2 \diff x}
+	\end{equation}
+
+	minimal.
+	Vorgehen:
+
+	\begin{equation}
+		s(x) = \begin{cases}
+			s_1(x) & x \in [x_0, x_1] \\
+			s_2(x) & x \in [x_1, x_2] \\
+			& \vdots \\
+			s_N(x) & x \in [x_{N-1}, x_N]
+		\end{cases}
+	\end{equation}
+
+	Wobei aus \ref{eq:glatt} folgen muss:
+
+	\begin{align}
+		s_n'(x_n) = s_{n + 1}'(x_n) \\
+		s_n''(x_n) = s_{n + 1}''(x_n)
+	\end{align}
+
+	\section{Numerische Integration}
+
+	\subsection{Quadraturformeln}
+
+	\paragraph{Allgemeine Darstellung}
+
+	\begin{equation}
+		\int_a^b{f(x) \diff x} \approx \sum_{k = 1}^{s}{b_k f(a + c_k (b - a))}
+	\end{equation}
+
+	$b_k$ nennt man Gewichte, $c_k$ Knoten der Formel.
+	Typischerweise: $b_k, c_k \in [0, 1]$.
+
+	\begin{itemize}
+		\item Rechteckregel: $s = 1, (1, 0)$
+		\item Mittelpunktregel: $s = 1, (1, \frac{1}{2})$
+		\item Trapezregel: $s = 2, (\frac{1}{2}, 0), (\frac{1}{2}, 1)$
+		\item Simpsonregel: $s = 3, (\frac{1}{6}, 0), (\frac{4}{6}, \frac{1}{2}), (\frac{1}{6}, 1)$
+	\end{itemize}
+
+	Ein paar Fakten zu QF:
+
+	\begin{itemize}
+		\item Eine QF ist durch die Gewichte $b_1, ..., b_s$ und Knoten $c_1 < ...  < c_s$ eindeutig bestimmt.
+	\end{itemize}
+
+	\subsubsection{Ordnung von QF}
+
+	Besitzt eine Quadraturformel die Ordnung $p$, so gilt liefert sie für alle $f \in \mathbb{P}_{p-1}$ den exakten Wert des Riemann-Integrals
+
+	\begin{equation}
+		\int_a^b{f(x) \diff x}
+	\end{equation}
+
+	Eine QF besitzt genau dann die Ordnung $p$, wenn für alle $q \in \{1, ..., p\} \subset \mathbb{N}$, aber nicht mehr für $q = p + 1$, gilt:
+
+	\begin{equation}
+		\sum_{k = 1}^{s}{b_k c_k^{q - 1}} = \frac{1}{q}
+	\end{equation}
+
+	\subsubsection{Symmetrische QF}
+
+	Eine QF heißt symmetrisch, falls gilt:
+
+	\begin{eqnarray}
+		c_k = 1 - c_{s + 1 - k} \\
+		b_k = b_{s + 1 - k}
+	\end{eqnarray}
+
+	D.h. die Knoten sind symmetrisch um $\frac{1}{2}$ angeordnet und die Gewichte sind symmetrisch verteilt.
+
+	\begin{itemize}
+		\item Symmetrische QF besitzen immer eine gerade Ordnung.
+	\end{itemize}
+
+	\paragraph{Gauß-Quadraturformeln}
+
+	Es existiert eine eindeutige Quadraturformel der Ordnung $2s$.
+	Sie ist gegeben durch
+
+	\begin{equation}
+		c_k = \frac{1}{2}(1 + \gamma_k)
+	\end{equation}
+
+	für $k \in \{1, ..., s\}$, wobei die $\gamma_k$ die Nullstellen des Legendre-Polynoms vom Grad $s$ sind.
+	Die Gewichte sind dann eindeutig bestimmt durch
+
+	\begin{equation}
+		b_k = \int_0^1{L_k(x) \diff x}
+	\end{equation}
+
+	Dabei ist $L_k$ das $k$-te \href{https://de.wikipedia.org/wiki/Legendre-Polynom}{Legendre-Polynom}, bspw.:
+
+	\begin{align}
+		L_0(x) & = 1 \\
+		L_1(x) & = x \\
+		L_2(x) & = \frac{1}{2}(3x^2 - 1)
+	\end{align}
+
+	\begin{itemize}
+		\item Gauß-Quadraturformeln sind monoton.
+	\end{itemize}
+
+	\section{Eigenwertprobleme}
+
+	Grundlegendes Problem: berechne Eigenwerte $\lambda$ zu Eigenvektoren $v$ einer quadratischen Matrix.
+	Anwendungen: bspw. Eigenschwingung einer Membran, spektrale Bisektion.
+
+	\paragraph{EW-EV-Gleichung}
+
+	Sei $A \in \mathbb{R}^{N \times N}$. Dann heißen $v \in \mathbb{R^N} \setminus \{ 0 \}$ Eigenvektor und $\lambda \in \mathbb{R}$ dazugehöriger Eigenwert von $A$, gdw.:
+
+	\begin{equation}
+		A v = \lambda v
+	\end{equation}
+
+	Die \enquote{Wirkungsweise} von $A$ auf $v$ ist also einfach zu verstehen (Stauchung/Streckung).
+
+	\begin{itemize}
+		\item $A$ hat EW $\Leftrightarrow$ $A$ ist singulär $\Leftrightarrow$ $\exists \lambda \in \mathbb{R} : \det(A - \lambda I_N) = 0$.
+		\item $\det(A - \lambda I_N)$ ist ein Polynom in $\lambda$, genannt charakteristisches Polynom von $A$.
+		\item Aber: EW nicht wie bisher über c.P. berechnen, da schlecht konditioniert.
+	\end{itemize}
+
+	\paragraph{Konditionszahl}
+
+	Seien $u, v \in \mathbb{R}^N$ normiert, $A v = \lambda v$, $u^\top A = u^\top \lambda$ ($\Leftrightarrow A^\top u = \lambda u$).
+	Dann heißt
+
+	\begin{equation}
+		\frac{1}{|u^{\top} v|}
+	\end{equation}
+
+	die Konditionszahl von $\lambda$.
+
+	\begin{itemize}
+		\item $\frac{1}{|u^{\top} v|} \stackrel{\textrm{(CSU)}}{\geq} \frac{1}{\norm{u}_2 \norm{v}_2} = 1$
+	\end{itemize}
+
+	Merke: Für $A = A^\top$ gilt: $u \in \{ v, -v \}$, d.h.
+	
+	\begin{equation}
+		\frac{1}{|v^\top v|} = 1
+	\end{equation}
+
+	Symmetrische Matrizen sind also perfekt konditioniert.
+
+	\subsection{Vektoriteration}
+
+	\subsubsection{Inverse Vektoriteration}
+
+	\begin{equation}
+		A v = \lambda v \Leftrightarrow v = \lambda A^{-1} v \Leftrightarrow A^{-1} v = \frac{1}{\lambda} v
+	\end{equation}
+
+	$\leadsto$ EV von $A$ und $A^{-1}$ sind identisch, $\Spektrum(A^{-1}) = \frac{1}{\Spektrum(A)}$.
+
+	\section{Iterative Verfahren von LGS}
+
+	Löse $Ax = b$, wobei
+
+	\begin{itemize}
+		\item $N$ sehr groß,
+		\item A dünn besetzt
+		\item und/oder keine exakte Lösung notig ist.
+	\end{itemize}
+
+	(Beispielsweise spektrale Bisektion).
+
+	Direkte Verfahren (LR, Cholesky, QR) sind hier ungeeignet, da sie aufwändig sind und \enquote{fill-in} aufweisen, d.h. die Zerlegungsmatrizen sind (fast) voll besetzt, selbst wenn $A$ dünn besetzt ist.
+
+	Alternative: Iterative Verfahren.
+
+	\subsection{Allgemeine lineare Iteration}
+
+	Seien $A$, \enquote{Vorkonditionierer} $B$ regulär, idealerweise mit
+
+	\begin{equation}
+		\cond(B^{-1} A) \stackrel{\textrm{viel}}{<} \cond(A)
+	\end{equation}
+
+	Dann gilt:
+
+	\begin{equation}
+		A x = b \Leftrightarrow B^{-1} A x = B^{-1} b \Leftrightarrow x = (I_N - B^{-1} A)x + B^{-1} b = x + B^{-1} (b - A x)
+	\end{equation}
+
+	Solche Gleichungen nennt man Fixpunktgleichungen.
+
+	\paragraph{Fixpunktiteration}
+
+	Eine solche Fixpunktgleichung kann durch eine Fixpunktiteration gelöst werden, wenn
+
+	\begin{align}
+		\rho(I_N - B^{-1} A) < 1
+	\end{align}
+
+	mit dem Spektralradius $\rho(M) = \max | \Spektrum(M) |$.
+	Ausgehend von einem Startwert $x^0 \in \mathbb{R}^N$ berechne für $k = 0, 1, ...$:
+
+	\begin{equation}
+		x^{k + 1} = x^k + B^{-1} r^k
+	\end{equation}
+
+	mit dem Residuum $r^k = b - A x^k$.
+	Nach der Bedingung ist $A$ regulär und die Fixpunktiteration konvergiert linear gegen eine eindeutige Lösung $x_*$ von $Ax = b$.
+
+	\subsection{Beispiele für iterative Verfahren}
+
+	Zerlege $A = L + D +R$, wobei $L$ eine \emph{strikte} untere Dreiecksmatrix, $R$ eine \emph{strikte} obere Dreiecksmatrix und entsprechend $D$ eine Diagonalmatrix ist.
+
+	\subsubsection{Jacobi-Verfahren}
+
+	Wähle $B = D$.
+
+	\begin{itemize}
+		\item Auch Gesamtschrittverfahren genannt.
+		\item Einfach parallelisierbar wegen komponentenweiser Multiplikation.
+	\end{itemize}
+
+	\subsubsection{Gauß-Seidel-Verfahren}
+
+	Wähle $B = L + D$ (immer noch untere Dreicksmatrix).
+
+	\begin{itemize}
+		\item Auch Einzelschrittverfahren.
+		\item Einfach nacheinander berechenbar, aber nicht parallelisierbar.
+	\end{itemize}
+
+	\subsubsection{Unvollständige LR-Zerlegung}
+
+	Wähle $B = M \cdot S$, wobei $A \approx M S$ \enquote{unvollst. LR-Zerlegung}.
+	Die unvollständige LR-Zerlegung ($A_{j,k} = 0 \Rightarrow (MS)_{j,k} = 0$) vermeidet Fill-In, liefert aber kein genaues Resultat.
+
+	\subsection{Konvergenz von Jacobi- und Gauß-Seidel-Verfahren}
+
+	Ist $A$ strikt diagonaldominant, so konvergieren sowohl das Jacobi- als auch das Gauß-Seidel-Verfahren für jeden Startwert $x^0 \in \mathbb{R}^N$ gegen die Lösung $x_*$ von $Ax = b$.
+
+	In der Regel konvergiert das Gauß-Seidel-Verfahren schneller als das Jacobi-Verfahren (es ist aber nicht so gut parallelisierbar).
+
+	\subsection{Algorithmus}
+
+	\begin{enumerate}
+		\item Wähle $x^0 \in \mathbb{R}^N, \epsilon > 0$ und setze $r^0 = b - A x^0, k = 0$.
+		\item Löse $B c^k = r^k$ nach $c^k$.
+		\begin{itemize}
+			\item $x^{k + 1} = x^k + c^k$
+			\item $r^{k + 1} = r^k - A c^k$
+		\end{itemize}
+		\item Falls $\norm{r^k} < \epsilon \norm{b}$, STOP. Ansonsten erhöhe $k$ und gehe zu Schritt 2.
+	\end{enumerate}
+
+	Merke: Das LGS in Schritt 2 muss leichter zu Lösen sein als $Ax = b$, bspw. ist es trivial beim Jacobi-Verfahren, da $B$ eine Diagonalmatrix ist und einfach beim Gauß-Seidel-Verfahren durch Vorwärtssubstitution.
+
+	\section{Grundwissen}
+
+	\subsection{Matrizen}
+
+	Im folgenden: $A \in \mathbb{R}^{N \times N}$.
+
+	\subsubsection{Symmetrische Matrizen}
+
+	\begin{align}
+		& \textrm{\enquote{$A$ ist symmetrisch}} \\
+		\Leftrightarrow & A = A^\top
+	\end{align}
+
+	\subsubsection{Reguläre Matrizen}
+
+	\begin{align}
+		& \textrm{\enquote{$A$ ist regulär}} \\
+		\Leftrightarrow & \textrm{\enquote{$A$ ist invertierbar}} \\
+		\Leftrightarrow & \exists A^{-1} : A A^{-1} =  A^{-1} A = I_N
+	\end{align}
+
+	\subsubsection{Orthogonale Matrizen}
+
+	\subsubsection{Matrixnormen}
+
+	\paragraph{Spaltensummennorm}
+
+	Größte betragliche Summe einer Spalte:
+
+	\begin{equation}
+		\norm{A}_1 = \max_{m = 1, ..., N}{\sum_{n = 1}^N{|a_{nm}|}}
+	\end{equation}
+
+	\paragraph{Zeilensummennorm}
+
+	Größte betragliche Summe einer Zeile:
+
+	\begin{equation}
+		\norm{A}_\infty = \max_{n = 1, ..., N}{\sum_{m = 1}^N{|a_{nm}|}}
+	\end{equation}
+
+	\paragraph{Spektralnorm}
+
+	Wurzel des größten EW von $A^\top A$:
+
+	\begin{equation}
+		\norm{A}_2 = \sqrt{\max \Spektrum(A^\top A)}
+	\end{equation}
+
+	\subsubsection{Eigenwerte}
+
+	Seien $v \in \mathbb{R}^N, \lambda \in \mathbb{R}$. $v$ heißt Eigenvektor zum Eigenwert $\lambda$ genau dann wenn:
+
+	\begin{equation}
+		A v = \lambda v
+	\end{equation}
+
+	$A^{-1}$ hat die EW $\frac{1}{\lambda}$ zu denselben EV $v$:
+
+	\begin{equation}
+		A v = \lambda v \Leftrightarrow v = \lambda A^{-1} v \Leftrightarrow A^{-1} v = \frac{1}{\lambda} v
+	\end{equation}
+
+	$A - \lambda^* I_N$ hat die EW $\lambda - \lambda^*$ zu denselben EV $v$:
+
+	\begin{equation}
+		(A - \lambda^* I_N) v = A v - \lambda^* I_N v = \lambda v - \lambda^* v = (\lambda - \lambda^*)v
+	\end{equation}
+\end{document}
