@@ -4,6 +4,7 @@
 \usepackage[ngerman]{babel}
 \usepackage[autostyle=true,german=quotes]{csquotes}
 \usepackage{amsmath}
+\usepackage{dsfont}
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
@@ -28,6 +29,124 @@
 	\newpage
 	\tableofcontents
 	\newpage
+
+    \section{Einf\"uhrung}
+
+    \subsection{Normalisierte Gleitpunktdarstellung}
+    Zahl z wird dargestellt durch: $B^{e} * m$\\
+    Seien $L_e,\, L_m$ die L\"ange des Exponenten, bzw. der Mantissse und $a_l,\, c_l \in \{0,1,...,B-1\}$\\
+    \textbf{Exponent:} $e_{min} \leq e = e_{min} + \sum\limits_{l=0}^{L_e-1} c_l B^l \leq e_{min} + B^L_e - 1 = e_{max}$\\
+    \textbf{Mantisse:} $m = B^{-1} \leq |\pm\sum\limits_{l=1}^{L_m} a_l B^{-l}| < 1$
+
+    \subsection{Maschinengenauigkeit}
+    eps := $\frac{B^{1-L_m}}{2}$\\
+    Kleinste Zahl die auf 1 addiert werden kann um eine Zahl $>1$ zu erhalten:\\
+    Mantisse l\"anger $\Rightarrow$ eps kleiner $\Rightarrow$ Darstellung genauer
+
+    \subsection{IEEE-Standard Double Precision-Format}
+    Basis B = 2, insgesamt 64-Bit aufgeteilt in:
+    \begin{itemize}
+        \item 1-Bit Vorzeichen
+        \item 52-Bit Mantisse
+        \item 11-Bit Exponent
+    \end{itemize}
+    Kleinste Zahl $>1$ normalerweise: 1 + 2eps\\
+    \textbf{Hier:} 1 + eps\\
+    (durch Normalisierung 1. Bit von Mantisse = 1 vorausgesetzt\\
+    $\Rightarrow$ kann ignoriert werden, somit 1 Bit mehr f\"ur Mantisse)
+
+    \subsection{Kondition eines Problems}
+    Auswirkungen von Eingabefehlern (z.B. durch beschr\"ankte Darstellbarkeit reeller Zahlen) auf die L\"osung bei
+    optimalem L\"osungsverfahren?
+
+    \subsection{Stabilit\"at eines Verfahrens}
+    Auswirkungen von Fehlern im L\"osungsverfahren (Approximations- oder Rundungsfehler) auf L\"osung?
+
+    \subsection{Ausl\"oschung}
+    Kondition einer Summe $x + y$ mit $y \approx -x$ schlecht\\
+    (Differenz zweier \textit{fast} gleich gro{\ss}er Zahlen f\"uhrt zum Verlust signifikanter Bits,
+    rundungsfehlerbehaftete Bits bilden die vorderen Nachkommastellen der L\"osung)
+
+    \section{Direkte L\"osungsverfahren f\"ur LGS}
+    Wir wollen Lineare Gleichungssysteme der Form \textbf{Ax} = \textbf{b} l\"osen. Sei im Folgenden die Matrix
+    $A\in\mathds{R}^{N\times N}$ und $b\in\mathds{R}^{N}$.
+
+    \subsection{LR-Zerlegung}
+    Eine regul\"are Matrix besitzt genau dann eine LR-Zerlegung der Form $A = LR$, bzw. $PA = LR$ (wobei $L$ eine untere
+    Dreiecks-, $R$ obere Dreiecks- und $P$ eine Permutationsmatrix ist) wenn
+    \begin{enumerate}
+        \item $A_{[1:n,1:n]}$ f\"ur alle $n = 1,\,\hdots, N$ regul\"ar ist
+        \item $A$ strikt Diagonaldominant ist
+        \item $PA$ eine der anderen Anforderungen erf\"ullt
+    \end{enumerate}
+    Die Zerlegung ist eindeutig und kann in $\frac{1}{3}N^3$ Operationen berechnet werden.\\
+    \newline
+    \textbf{Berechnung:}\\
+    $P$ wird durch Spaltenpivotwahl bei der Bestimmung von $L$ und $R$ ermittelt.
+    \begin{enumerate}
+        \item L\"ose $L$\textbf{y} = \textbf{b} (durch Vorw\"artssubsitution)
+        \item L\"ose $R$\textbf{x} = \textbf{y} (durch R\"uckw\"artssubstitution)
+    \end{enumerate}
+    \textbf{Beispiele im Skript:} Beispiel 6, Seite 19 und Beispiel 7, Seite 21
+
+    \subsection{Cholesky-Zerlegung}
+    Eine regul\"are Matrix $A$ besitzt genau dann eine Cholesky-Zerlegung der Form $A = LL^T$, wenn sie symmetrisch und
+    positiv definit ist. Im Unterschied zur LR-Zerlegung kann $L$ hier auch Werte $\neq 1$ auf der Hauptdiagonalen
+    enthalten.\\
+    \newline
+    Die Zerlegung ist eindeutig und kann in $\frac{1}{6}N^3$ Operationen berechnet werden.\\
+    \newline
+    \textbf{Berechnung:}
+    \begin{enumerate}
+        \item L\"ose $L$\textbf{y} = \textbf{b} (durch Vorw\"artssubsitution)
+        \item L\"ose $L^T$\textbf{x} = \textbf{y} (durch R\"uckw\"artssubstitution)
+    \end{enumerate}
+
+    \subsection{QR-Zerlegung}
+    F\"ur jede Matrix $A\in\mathds{R}^{M\times N}$, mit $M \geq N$ und maximalem Rang existiert eine Zerlegung der Form
+    $A = QR$.\\
+    Hierbei ist $Q\in\mathds{R}^{M\times M}$ eine Orthogonale Matrix und
+    $R\in\mathds{R}^{M\times N} = \begin{pmatrix}\bar{R}\\0\end{pmatrix}$, mit $\bar{R}\in\mathds{R}^{N\times N}$ ist
+    obere Dreiecksmatrix.\\
+    \newline
+    \textbf{Berechnung:}
+    \begin{enumerate}
+        \item Bestimme $Q$ und $R$ mittels Householder-Transformationen
+        \item L\"ose $Q$\textbf{c} = \textbf{b} ($Q^{-1} = Q^T$, also c = $Q^Tb$)
+        \item L\"ose $R$\textbf{x} = \textbf{c}
+    \end{enumerate}
+    Die QR-Zerlegung ist besonders stabil, ben\"otigt jedoch $\frac{2}{3}N^3$ Operationen.
+
+    \subsubsection{Householder-Transformationen}
+    Wir suchen eine symmetrische, orthogonale Matrix $Q$ der Form:\\
+    $Q = I_M - 2$\textbf{ww}$^T$, wobei \textbf{w} = $\frac{\textbf{v} - \sigma \textbf{e}^1}{||\textbf{v} - \sigma
+    \textbf{e}^1||_2}$ und $\sigma$ =
+    $\begin{cases}
+         -||\textbf{v}||_2 & \text{falls v}_1 > 0\\
+         ||\textbf{v}||_2 & \text{falls v}_1 \leq 0\\
+    \end{cases}$\\
+    Sodass: $Q$\textbf{v} = $\sigma$e$^1$ = ($\sigma$ 0 $\hdots$ 0)$^T$\\
+
+    \subsubsection{Konkrete Householder-Transformation}
+    Sei \textbf{a}$^1$ die erste Spalte von $A^{M\times N}$ und $Q_1$ eine HT wie oben definiert.\\
+    Mit $Q_1$\textbf{a}$^1$ = $r_{11}$\textbf{e}$^1\in\mathds{R}^M$, $r_{11}$ = -sign$(a_1^1)||a^1||_2$ und
+    geeignetem $r_{12}\in\mathds{R}^{N-1}$ und $A^{(1)}\in\mathds{R}^{(M-1)\times (N-1)}$ erh\"alt man:
+    \begin{center}
+        $Q_1A = \begin{pmatrix}r_{11} & r_{12}^T\\ 0_{M-1} & A^{(1)}\end{pmatrix}$
+    \end{center}
+    Da $A^{(1)}$ auch maximalen Rang hat existiert auch $A^{(1)} = Q_{22}R_{22}$.\\
+    Wir definieren
+    \begin{center}
+        $Q_2 = \begin{pmatrix}1 & 0_{M-1}^T\\ 0_{M-1} & Q_{22}\end{pmatrix}$ und
+        $R = \begin{pmatrix}r_{11} & r_{12}^T\\ 0_{N-1} & R_{22}\end{pmatrix}$
+    \end{center}
+    Wiederhole M-mal. Es gilt: $A = QR$ (mit $Q = Q_1 Q_2\,\hdots\,Q_M$)\\
+    \newline
+    \textbf{Beachte:} Sei $a^j$ = $j$-te Spalte von A und $j$ = 0, $\hdots$, N. $A^{(1)}$ und $r_{12}$ k\"onnen ohne
+    explizites $Q_1$ berechnet werden:
+    \begin{center}
+        $Q_1 a^j = a^j - 2w_1^T a^j w_1$
+    \end{center}
 
 	\section{Interpolation und Approximation}
 
