@@ -174,7 +174,7 @@
 
 	\begin{itemize}
 		\item Für $f_n = 0$ muss man $L_n$ also gar nicht berechnen.
-		\item Ein Lagrange-Polynom hat immer den Grad $N - 1$.
+		\item Ein Lagrange-Polynom hat immer den Grad $N$.
 		\item Lagrange-Interpolation ist für hohe $N$ schlecht konditioniert und liegt außerdem in $O(n)$.
 	\end{itemize}
 
@@ -267,6 +267,7 @@
 	\begin{itemize}
 		\item $\forall x \in \mathbb{R} : |T_N(x)| \leq 1$
 		\item $\deg(T_N) = N$
+		\item $T_N(x) = 2^{N - 1}x + ...$ für $N \geq 1$
 		\item $\left< T_0, ..., T_N \right> = \mathbb{P}^N$ (die $T_n$ bilden 1 Basis von $\mathbb{P}^N$)
 		\item $T_N$ hat $N$ verschiedene reelle Nullstellen $x_n$ mit $x_n \in [-1, 1]$
 	\end{itemize}
@@ -279,7 +280,7 @@
 
 	\begin{itemize}
 		\item Tschebyscheff-Darstellung ist eindeutig.
-		\item Berechnung von $c_n$ im Fall $N + 1 = 2^k$: $O(N * log N)$
+		\item Berechnung von $c_n$ im Fall $N + 1 = 2^k$: $O(N * \log N)$ durch FFT
 	\end{itemize}
 
 	\paragraph{Clenshaw-Algorithmus}
