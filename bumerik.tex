@@ -148,6 +148,28 @@
         $Q_1 a^j = a^j - 2w_1^T a^j w_1$
     \end{center}
 
+    \subsection{Kondition von LGS}
+    Wie wirken Störungen der Eingabegrößen (hier $A$ und \textbf{b}) auf die Lösung unabhängig von vom gewählten
+    Algorithmus aus?
+
+    \subsubsection{Matrixnormen}
+    Sei $A\in\mathds{R}^{N\times N}$. Wir definieren 4 Normen für Matrizen:\\
+    \newline
+    \begin{tabular}[h]{lll}
+        1. & allgemeine Norm: & $||A||$ := $\sup\limits_{x\neq 0}\frac{||Ax||}{||x||}$\\
+        2. & Spaltensummennorm: & $||A||_1 = \max\limits_{m=1, .., N} \sum\limits_{n=1}^N |a_{nm}|$\\
+        3. & Spektralnorm: & $||A||_2 = \sqrt{\text{größter EW von }A^T A}$\\
+        4. & Zeilensummennorm: & $||A||_{\infty} = \max\limits_{n=1, ..., N} \sum\limits_{n=1}^N |a_{nm}|$
+    \end{tabular}
+
+    \subsubsection{Störung der rechten Seite}
+    Sei $\tilde{x}$ die Lösung zur Gleichung mit gestörter rechter Seite: $A\tilde{x}$ = $\tilde{b}$.\\
+    \textbf{Absolute Abweichung:} $||x - \tilde{x}||$ = $||A^{-1}(b-\tilde{b})|| \leq ||A^{-1}||\,||b - \tilde{b}||$\\
+    \textbf{Relative Abweichung:} $\frac{||x - \tilde{x}||}{||x||}$ = $\frac{||A^{-1}(b-\tilde{b})||}{||x||}
+        \leq \frac{||b||\,||A^{-1}||}{||x||}\frac{||b - \tilde{b}||}{||b||}$\\
+    \newline
+    \textbf{Konditionszahl einer Matrix:} cond($A$) := $||A||\,||A^{-1}||$
+
 	\section{Interpolation und Approximation}
 
 	\paragraph{Weiherstraßscher Approximationssatz}
